@@ -1,6 +1,8 @@
 # VRCJapaneseInputSystem
 
 VRChat向けに開発した、UdonやSKK辞書を使用した、日本語入力システムを構成するプログラム群です。
+<img width="848" height="758" alt="image" src="https://github.com/user-attachments/assets/0dae4ad5-b445-428c-8d4f-2b5ce4051de2" />
+
 
 ## ライセンス (License)
 
