@@ -198,6 +198,21 @@ public class IMESetupTool : EditorWindow
             else if (keyValue == "Enter") { keyType = 2; keyValue = ""; }
             else if (keyValue == "BS") { keyType = 3; keyValue = ""; }
             else if (keyValue == "IME") { keyType = 5; keyValue = ""; }
+            else if ((keyValue == "Shift") || (keyValue == "shift")) { keyType = 6; keyValue = "Shift"; }
+            else if ((keyValue == "ShrinkSeg") || (keyValue == "shrinkseg")) { keyType = 7; keyValue = "ShrinkSeg"; }
+            else if ((keyValue == "ExtendSeg") || (keyValue == "extendseg")) { keyType = 8; keyValue = "ExtendSeg"; }
+            else if ((keyValue == "Hiragana") || (keyValue == "hiragana")) { keyType = 9; keyValue = "Hiragana"; }
+            else if ((keyValue == "Katakana") || (keyValue == "katakana")) { keyType = 10; keyValue = "Katakana"; }
+            else if ((keyValue == "Shift") || (keyValue == "shift")) { keyType = 6; keyValue = "Shift"; }
+            else if ((keyValue == "ShrinkSeg") || (keyValue == "shrinkseg")) { keyType = 7; keyValue = "ShrinkSeg"; }
+            else if ((keyValue == "ExtendSeg") || (keyValue == "extendseg")) { keyType = 8; keyValue = "ExtendSeg"; }
+            else if ((keyValue == "Hiragana") || (keyValue == "hiragana")) { keyType = 9; keyValue = ""; }
+            else if ((keyValue == "Katakana") || (keyValue == "katakana")) { keyType = 10; keyValue = ""; }
+            else if (keyValue == "Shift") { keyType = 6; keyValue = ""; }
+            else if (keyValue == "ShrinkSeg") { keyType = 7; keyValue = ""; }
+            else if (keyValue == "ExtendSeg") { keyType = 8; keyValue = ""; }
+            else if (keyValue == "Hiragana") { keyType = 9; keyValue = ""; }
+            else if (keyValue == "Katakana") { keyType = 10; keyValue = ""; }
             else { keyValue = keyValue.ToLower(); }
             
             // KeyButton取得または追加

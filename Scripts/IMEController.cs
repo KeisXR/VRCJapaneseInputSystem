@@ -288,10 +288,13 @@ public class IMEController : UdonSharpBehaviour
 
     private bool TrySelectCandidateByKey(string key)
     {
-        // Allow selecting candidates with number keys 1-9
+        // Allow selecting candidates with number keys 1-9 (page-aware)
         if (key.Length == 1 && key[0] >= '1' && key[0] <= '9')
         {
-            int index = (int)(key[0] - '1');
+            int maxShow = 9;
+            int currentIndex = kanjiConverter != null ? kanjiConverter.GetCurrentCandidateIndex() : 0;
+            int pageStart = (currentIndex / maxShow) * maxShow;
+            int index = pageStart + (int)(key[0] - '1');
             if (kanjiConverter != null)
             {
                if (kanjiConverter.TrySelectCandidate(index))
@@ -415,16 +418,18 @@ public class IMEController : UdonSharpBehaviour
     {
         if (kanjiConverter == null) return;
 
-        // Show current candidate in input area (preview)
+        // Show current candidate in input area with visual highlight
         if (inputDisplayText != null)
         {
             string current = kanjiConverter.GetCurrentCandidate();
             string remain = kanjiConverter.GetRemainingReading();
-            // Show: confirmed text + [current candidate] + remaining reading
-            inputDisplayText.text = committedText + current + remain;
+            // Highlight: confirmed text + [yellow underline: active segment] + [gray: remaining]
+            inputDisplayText.text = committedText
+                + "<u><color=#FFDD44>" + current + "</color></u>"
+                + "<color=#888888>" + remain + "</color>";
         }
 
-        // Show list in candidate area
+        // Show candidate list with paging
         if (candidateDisplayText != null)
         {
             string[] candidates = kanjiConverter.GetAllCandidates();
@@ -432,17 +437,28 @@ public class IMEController : UdonSharpBehaviour
             
             string display = "";
             int maxShow = 9;
-            int count = candidates != null ? Mathf.Min(candidates.Length, maxShow) : 0;
 
-            for (int i = 0; i < count; i++)
+            if (candidates != null && candidates.Length > 0)
             {
-                string marker = (i == currentIndex) ? "<color=yellow>" : "";
-                string endMarker = (i == currentIndex) ? "</color>" : "";
-                display += $"{marker}{i+1}. {candidates[i]}{endMarker}  ";
-            }
-            if (candidates != null && candidates.Length > maxShow)
-            {
-                display += "...";
+                // Page-based display
+                int pageStart = (currentIndex / maxShow) * maxShow;
+                int pageEnd = Mathf.Min(pageStart + maxShow, candidates.Length);
+
+                for (int i = pageStart; i < pageEnd; i++)
+                {
+                    int displayNum = i - pageStart + 1;
+                    string marker = (i == currentIndex) ? "<color=yellow>" : "";
+                    string endMarker = (i == currentIndex) ? "</color>" : "";
+                    display += $"{marker}{displayNum}. {candidates[i]}{endMarker}  ";
+                }
+
+                // Page indicator
+                int totalPages = (candidates.Length + maxShow - 1) / maxShow;
+                int currentPage = currentIndex / maxShow + 1;
+                if (totalPages > 1)
+                {
+                    display += $"  [{currentPage}/{totalPages}]";
+                }
             }
             
             candidateDisplayText.text = display;

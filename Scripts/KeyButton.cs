@@ -41,6 +41,9 @@ public class KeyButton : UdonSharpBehaviour
     [SerializeField] private Color normalColor = new Color(0.2f, 0.2f, 0.2f, 1f);
     [SerializeField] private Color pressedColor = new Color(0.4f, 0.4f, 0.8f, 1f);
     
+    [Header("Audio")]
+    [SerializeField] private AudioSource keyClickAudio;
+    
     private bool isShiftActive = false;
     private string originalValue = "";
     
@@ -102,6 +105,13 @@ public class KeyButton : UdonSharpBehaviour
                 {
                     keyLabel.text = isEnabled ? "あ" : "A";
                 }
+                // IMEキーの背景色で状態を示す
+                if (keyBackground != null)
+                {
+                    keyBackground.color = isEnabled
+                        ? new Color(0.2f, 0.5f, 0.2f, 1f)  // 緑: IME ON
+                        : normalColor;                       // 標準: IME OFF
+                }
                 break;
                 
             case 6: // Shift
@@ -127,6 +137,12 @@ public class KeyButton : UdonSharpBehaviour
         
         // 視覚フィードバック
         FlashKey();
+        
+        // 音声フィードバック
+        if (keyClickAudio != null && keyClickAudio.clip != null)
+        {
+            keyClickAudio.PlayOneShot(keyClickAudio.clip);
+        }
     }
     
     /// <summary>

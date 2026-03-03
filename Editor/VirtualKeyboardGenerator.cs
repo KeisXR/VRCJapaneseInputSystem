@@ -66,6 +66,12 @@ public class VirtualKeyboardGenerator : EditorWindow
         rootRect.sizeDelta = new Vector2(canvasWidth, canvasHeight);
         rootRect.localScale = Vector3.one * 0.001f; // World Spaceスケール
         
+        // 共有AudioSource（キークリック音用）
+        AudioSource audioSource = root.AddComponent<AudioSource>();
+        audioSource.playOnAwake = false;
+        audioSource.spatialBlend = 1f; // 3D sound for VR
+        audioSource.volume = 0.3f;
+        
         // 背景パネル
         GameObject bgPanel = CreatePanel(root.transform, "Background", canvasWidth, canvasHeight);
         Image bgImage = bgPanel.GetComponent<Image>();
@@ -109,8 +115,8 @@ public class VirtualKeyboardGenerator : EditorWindow
             new string[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=" },
             new string[] { "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]" },
             new string[] { "a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'", "BS" },
-            new string[] { "IME", "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "Enter" },
-            new string[] { "Space" }
+            new string[] { "Shift", "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "Enter" },
+            new string[] { "IME", "ShrinkSeg", "Space", "ExtendSeg", "Hiragana", "Katakana" }
         };
         
         float[] rowOffsets = { 0, 0, 10, 20, 0 };
@@ -164,11 +170,17 @@ public class VirtualKeyboardGenerator : EditorWindow
         switch (key)
         {
             case "Space":
-                return keyWidth * 5 + keySpacing * 4;
+                return keyWidth * 4 + keySpacing * 3;
             case "Enter":
             case "BS":
             case "IME":
+            case "Shift":
+            case "Hiragana":
+            case "Katakana":
                 return keyWidth * 1.5f;
+            case "ShrinkSeg":
+            case "ExtendSeg":
+                return keyWidth;
             default:
                 return keyWidth;
         }
@@ -269,6 +281,16 @@ public class VirtualKeyboardGenerator : EditorWindow
                 return "Space";
             case "IME":
                 return "あ/A";
+            case "Shift":
+                return "⇧";
+            case "ShrinkSeg":
+                return "◀";
+            case "ExtendSeg":
+                return "▶";
+            case "Hiragana":
+                return "ひら";
+            case "Katakana":
+                return "カナ";
             default:
                 return key.ToUpper();
         }
