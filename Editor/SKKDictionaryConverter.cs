@@ -163,11 +163,15 @@ public class SKKDictionaryConverter : EditorWindow
         
         // タブ区切り形式で出力: よみ\t候補1,候補2,候補3
         var sb = new StringBuilder();
-        foreach (var kvp in entries)
+
+        var sortedKeys = new List<string>(entries.Keys);
+        sortedKeys.Sort((a, b) => string.CompareOrdinal(a, b));
+
+        foreach (var key in sortedKeys)
         {
-            sb.Append(kvp.Key);
+            sb.Append(key);
             sb.Append('\t');
-            sb.Append(string.Join(",", kvp.Value));
+            sb.Append(string.Join(",", entries[key]));
             sb.Append('\n');
         }
         

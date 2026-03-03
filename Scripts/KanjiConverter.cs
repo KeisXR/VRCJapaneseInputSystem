@@ -113,15 +113,17 @@ public class KanjiConverter : UdonSharpBehaviour
         int[] prefixMatchIndices = new int[MAX_PREFIX_MATCHES];
         int prefixCount = 0;
 
-        for (int i = 0; i < dictionarySize; i++)
+        for (int len = reading.Length - 1; len > 0; len--)
         {
-            string key = dictionaryKeys[i];
-            if (key.Length < reading.Length && StartsWithOrdinal(reading, key))
+            string prefix = reading.Substring(0, len);
+            int prefixMatchIndex = FindMatchInDictionary(prefix);
+            if (prefixMatchIndex != -1)
             {
                 if (prefixCount < MAX_PREFIX_MATCHES)
                 {
-                    prefixMatchLengths[prefixCount] = key.Length;
-                    prefixMatchIndices[prefixCount] = i;
+                    // Storing from longest to shortest prefix
+                    prefixMatchLengths[prefixCount] = len;
+                    prefixMatchIndices[prefixCount] = prefixMatchIndex;
                     prefixCount++;
                 }
             }
@@ -180,9 +182,15 @@ public class KanjiConverter : UdonSharpBehaviour
 
     private int FindMatchInDictionary(string key)
     {
-        for (int i = 0; i < dictionarySize; i++)
+        int left = 0;
+        int right = dictionarySize - 1;
+        while (left <= right)
         {
-            if (dictionaryKeys[i] == key) return i;
+            int mid = left + (right - left) / 2;
+            int cmp = CompareOrdinal(dictionaryKeys[mid], key);
+            if (cmp == 0) return mid;
+            if (cmp < 0) left = mid + 1;
+            else right = mid - 1;
         }
         return -1;
     }
@@ -193,16 +201,14 @@ public class KanjiConverter : UdonSharpBehaviour
     /// </summary>
     private int FindLongestPrefixLength(string text)
     {
-        int longest = 0;
-        for (int i = 0; i < dictionarySize; i++)
+        for (int len = text.Length; len > 0; len--)
         {
-            string key = dictionaryKeys[i];
-            if (key.Length > longest && StartsWithOrdinal(text, key))
+            if (FindMatchInDictionary(text.Substring(0, len)) != -1)
             {
-                longest = key.Length;
+                return len;
             }
         }
-        return longest;
+        return 0;
     }
 
     private void SetupCandidates(string key, int index)
@@ -261,20 +267,25 @@ public class KanjiConverter : UdonSharpBehaviour
     }
 
     /// <summary>
-    /// Ordinal (character-by-character) StartsWith check.
-    /// .NET's String.StartsWith uses culture-sensitive comparison by default,
-    /// which causes false matches with Japanese characters
-    /// (e.g. ー U+30FC matching は U+306F).
-    /// This method avoids that issue entirely.
+    /// Ordinal (character-by-character) string comparison for binary search.
+    /// Udon does not fully support string.CompareOrdinal natively without boxing,
+    /// so we implement it manually to avoid culture-sensitive comparison issues 
+    /// with Japanese characters.
     /// </summary>
-    private bool StartsWithOrdinal(string text, string prefix)
+    private int CompareOrdinal(string a, string b)
     {
-        if (prefix.Length > text.Length) return false;
-        for (int i = 0; i < prefix.Length; i++)
+        int aLen = a.Length;
+        int bLen = b.Length;
+        int minLen = Mathf.Min(aLen, bLen);
+        
+        for (int i = 0; i < minLen; i++)
         {
-            if (text[i] != prefix[i]) return false;
+            if (a[i] != b[i])
+            {
+                return a[i] - b[i];
+            }
         }
-        return true;
+        return aLen - bLen;
     }
 
     // Interface methods required by IMEController
