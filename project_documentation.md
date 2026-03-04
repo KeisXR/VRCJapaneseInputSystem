@@ -46,15 +46,20 @@ graph LR
 
 | メソッド | トリガー | 動作 |
 |----------|----------|------|
-| `_OnInputKey()` | 文字キー押下 | ローマ字バッファに追加 / 変換中は候補の数字選択 |
+| `_OnInputKey()` | 文字キー押下 | ローマ字バッファに追加 / 変換中は候補の数字選択（ページ対応） |
 | `_OnSpace()` | Spaceキー | 入力→変換開始 / 変換中→次の候補 |
 | `_OnEnter()` | Enterキー | テキスト確定・出力 |
 | `_OnBackspace()` | BSキー | 入力→1文字削除 / 変換→キャンセル |
-| `_OnShrinkSegment()` | ←キー | 変換セグメントを1文字短縮 |
-| `_OnExtendSegment()` | →キー | 変換セグメントを1文字延長 |
+| `_OnShrinkSegment()` | ◀キー | 変換セグメントを1文字短縮 |
+| `_OnExtendSegment()` | ▶キー | 変換セグメントを1文字延長 |
 | `_OnCommitHiragana()` | ひらがな確定 | 現在のセグメントをひらがなのまま確定 |
 | `_OnCommitKatakana()` | カタカナ確定 | 現在のセグメントをカタカナに変換して確定 |
 | `_ToggleIME()` | IMEキー | IME ON/OFF切替（表示: あ/A） |
+
+**UI表示の視覚的フィードバック**:
+
+- **セグメントハイライト**: 変換中のアクティブセグメントを**黄色下線**で強調表示し、残りの未変換読みを**灰色**で表示。確定済み・変換中・未変換が一目で判別可能。
+- **候補のページング表示**: 変換候補を9件ずつページ単位で表示。10件以上の候補がある場合はSpaceキーで自動的にページが切り替わり、`[1/3]` のようなページインジケーターを表示。数字キーによる候補選択もページオフセットに対応。
 
 **セグメント処理フロー**:
 変換時、文節が残る場合は残りの読みで自動的に再変換をチェーンし、全セグメント確定で一括出力する。
@@ -116,19 +121,24 @@ dictionaryValues[i] = "候補1,候補2,..." (例: "日本,二本")
 
 **キータイプ定義**:
 
-| keyType | 種類 | 動作 |
-|---------|------|------|
-| 0 | 通常文字 | `_OnInputKey` に `keyValue` を送信 |
-| 1 | Space | `_OnSpace`（変換/次候補） |
-| 2 | Enter | `_OnEnter`（確定） |
-| 3 | Backspace | `_OnBackspace` |
-| 4 | Escape | `_OnEscape` |
-| 5 | IME Toggle | `_ToggleIME`（あ/A切替） |
-| 6 | Shift | 全キーの大文字/小文字切替 |
-| 7 | ← | `_OnShrinkSegment` |
-| 8 | → | `_OnExtendSegment` |
-| 9 | ひらがな確定 | `_OnCommitHiragana` |
-| 10 | カタカナ確定 | `_OnCommitKatakana` |
+| keyType | 種類 | 表示ラベル | 動作 |
+|---------|------|-----------|------|
+| 0 | 通常文字 | A〜Z, 0〜9等 | `_OnInputKey` に `keyValue` を送信 |
+| 1 | Space | Space | `_OnSpace`（変換/次候補） |
+| 2 | Enter | ↵ | `_OnEnter`（確定） |
+| 3 | Backspace | ← | `_OnBackspace` |
+| 4 | Escape | Esc | `_OnEscape` |
+| 5 | IME Toggle | あ/A | `_ToggleIME`（あ/A切替 + **キー背景色が緑/標準に変化**） |
+| 6 | Shift | ⇧ | 全キーの大文字/小文字切替 |
+| 7 | ◀ セグメント短縮 | ◀ | `_OnShrinkSegment` |
+| 8 | ▶ セグメント延長 | ▶ | `_OnExtendSegment` |
+| 9 | ひらがな確定 | ひら | `_OnCommitHiragana` |
+| 10 | カタカナ確定 | カナ | `_OnCommitKatakana` |
+
+**フィードバック機能**:
+
+- **視覚フィードバック**: キー押下時に `FlashKey()` で一瞬色が変化。IMEキーはON時に背景が**緑色**に変わり、OFF時に標準色に戻る。
+- **音声フィードバック**: `AudioSource`（`keyClickAudio`）が設定されている場合、キー押下時にクリック音を `PlayOneShot()` で再生。VR空間での打鍵感を向上。
 
 **VRChat連携**: `Interact()` をオーバーライドし、VRCのインタラクションイベントに対応。
 ボタンクリックは `UdonBehaviour.SendCustomEvent` 経由で `IMEController` のメソッドを呼ぶ。
@@ -142,7 +152,7 @@ dictionaryValues[i] = "候補1,候補2,..." (例: "日本,二本")
 **メニュー**: `Tools > Japanese IME > Setup Helper`
 
 仮想キーボードのPrefabに対して以下を一括設定:
-- `Key_xxx` 命名規則からキー値・タイプを自動推定
+- `Key_xxx` 命名規則からキー値・タイプを自動推定（`Shift`, `ShrinkSeg`, `ExtendSeg`, `Hiragana`, `Katakana` にも対応）
 - `KeyButton` コンポーネントの自動アタッチ
 - `IMEController` 参照の割り当て
 - ボタンの `OnClick` に `UdonBehaviour.Interact()` を登録
@@ -155,9 +165,11 @@ dictionaryValues[i] = "候補1,候補2,..." (例: "日本,二本")
 **メニュー**: `Tools > Japanese IME > Generate Virtual Keyboard`
 
 QWERTY配列の仮想キーボードUIを自動生成:
-- World Space Canvas + 4段キー配列 + Spaceバー
+- World Space Canvas + 5段キー配列（文字4段 + 機能キー段）
+- 機能キー段: `IME(あ/A)`, `◀(文節短縮)`, `Space`, `▶(文節延長)`, `ひら(ひらがな確定)`, `カナ(カタカナ確定)`
 - 入力表示エリア・候補表示エリア・IMEステータス表示
 - キーサイズ・間隔・Canvas寸法がカスタマイズ可能
+- ルートオブジェクトに3D対応の `AudioSource` を自動付与（キークリック音用、AudioClipはInspectorから任意設定）
 
 ---
 
@@ -177,10 +189,10 @@ QWERTY配列の仮想キーボードUIを自動生成:
 ```
 VRCJapaneseInputSystem/
 ├── Scripts/                    ... ランタイムスクリプト (UdonSharp)
-│   ├── IMEController.cs        ... 中央制御（467行）
-│   ├── KanjiConverter.cs       ... かな漢字変換（421行）
+│   ├── IMEController.cs        ... 中央制御（483行）
+│   ├── KanjiConverter.cs       ... かな漢字変換（432行）
 │   ├── RomajiConverter.cs      ... ローマ字→ひらがな変換（290行）
-│   └── KeyButton.cs            ... キーボタンUI制御（200行）
+│   └── KeyButton.cs            ... キーボタンUI制御（216行）
 ├── Editor/                     ... Unity Editorツール
 │   ├── IMESetupTool.cs         ... Prefab自動セットアップ
 │   ├── VirtualKeyboardGenerator.cs ... キーボードUI生成
@@ -217,5 +229,9 @@ VRCJapaneseInputSystem/
 - **Udon制約への対応とパフォーマンス**: ジェネリクス、LINQ不使用。並列配列で辞書を管理。また、変換時のループ負荷をなくすため、事前にソートされた辞書を**O(log N)の二分探索**で検索するよう最適化。
 - **2ステップ先読み分節**: 貪欲最長一致ではなく、次の文節との合計長を評価し、助詞（は・が・を）の正しい分離を実現。
 - **カスタムOrdinal比較**: .NETカルチャ依存のStartsWith等による誤一致を避け、GCを発生させずに高速な文字列比較を行う `CompareOrdinal` メソッドを自作して二分探索を支えている。
-- **セグメント手動調整**: 変換中にユーザーが←→キーで文節長を伸縮可能。
-- **ひらがな/カタカナ直接確定**: 変換中でも特定キーでひらがな・カタカナとして即時確定可能。
+- **セグメント手動調整**: 変換中にユーザーが◀▶キーで文節長を伸縮可能。
+- **ひらがな/カタカナ直接確定**: 変換中でも専用キー（ひら/カナ）でひらがな・カタカナとして即時確定可能。
+- **変換セグメントのリッチテキスト表示**: 変換中のアクティブセグメントを黄色下線、残りの読みを灰色で表示し、操作対象を視覚的に明確化。
+- **候補ページング**: 変換候補を9件単位でページ表示し、ページインジケーター `[n/m]` を付与。数字キーによる選択もページオフセットに対応。
+- **音声フィードバック**: キー打鍵時に `AudioSource.PlayOneShot()` でクリック音を再生可能（AudioClipは任意設定）。VR空間での入力体感を向上。
+- **IMEキーの状態色表示**: IME ON時にトグルキーの背景色が緑に変化し、現在のIME状態を即座に視認可能。
