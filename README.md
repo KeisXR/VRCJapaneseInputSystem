@@ -1,6 +1,9 @@
 # VRCJapaneseInputSystem
 
 VRChat向けに開発した、UdonやSKK辞書を使用した、日本語入力システムを構成するプログラム群です。
+VRChatワールドにサンプルを配置しています。
+https://vrchat.com/home/world/wrld_94bafefe-e06b-4b3d-bdb1-0cc687afcc2c
+https://x.com/KeisVRC/status/2026211759519056290/video/1
 <img width="848" height="758" alt="image" src="https://github.com/user-attachments/assets/0dae4ad5-b445-428c-8d4f-2b5ce4051de2" />
 
 
